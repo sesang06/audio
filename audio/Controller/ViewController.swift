@@ -25,7 +25,13 @@ class ViewController: UIViewController {
   private let viewModel: AudioListViewModel = {
     let networking = AudioNetworking()
     let service = AudioService(networking: networking)
-    let vm = AudioListViewModel(service: service)
+    let downloadService = AudioDownloadService()
+    let playService = AudioPlayService()
+    let vm = AudioListViewModel(
+      service: service,
+      downloadService: downloadService,
+      playService: playService
+    )
     return vm
   }()
   

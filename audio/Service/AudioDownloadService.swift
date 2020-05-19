@@ -11,7 +11,11 @@ import RxSwift
 import RxCocoa
 import Alamofire
 
-final class AudioDownloadService {
+protocol AudioDownloadServiceType {
+  func fetch(url: URL?) -> Observable<URL>
+}
+
+final class AudioDownloadService: AudioDownloadServiceType {
 
   func fetch(url: URL?) -> Observable<URL> {
     guard let url = url else {

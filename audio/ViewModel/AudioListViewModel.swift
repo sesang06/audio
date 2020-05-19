@@ -34,13 +34,19 @@ final class AudioListViewModel {
 
   private let service: AudioServiceType
 
-  private let downloadService = AudioDownloadService()
+  private let downloadService: AudioDownloadServiceType
 
-  private let playService = AudioPlayService()
+  private let playService: AudioPlayServiceType
 
 
-  init(service: AudioServiceType) {
+  init(
+    service: AudioServiceType,
+    downloadService: AudioDownloadServiceType,
+    playService: AudioPlayServiceType
+  ) {
     self.service = service
+    self.downloadService = downloadService
+    self.playService = playService
   }
 
   fileprivate enum Action {
@@ -68,7 +74,6 @@ final class AudioListViewModel {
         return models.map {
           return AudioItem(model: $0, config: configuration)
         } }
-      .asDriver(onErrorDriveWith: .empty())
 
 
     let previous = inputs.previous.map { (0, Action.previous) }
@@ -105,10 +110,10 @@ final class AudioListViewModel {
 
     let fetchAudio = selectedAudio
       .flatMapLatest { model -> Observable<URL> in return
-        self.downloadService.fetch(url: model.audioURL) }
+        weakSelf?.downloadService.fetch(url: model.audioURL) ?? .empty() }
       .map {
-        self.playService.start(url: $0)
-        self.playService.play()
+        weakSelf?.playService.start(url: $0)
+        weakSelf?.playService.play()
        return
     }
      .share()
@@ -124,16 +129,18 @@ final class AudioListViewModel {
       .flatMap { _ -> Observable<Void> in .just(self.playService.rewind()) }
 
     let skip = inputs.skip
-      .flatMap { _ -> Observable<Void> in
-        .just(self.playService.skip()) }
+      .flatMap { [weak self] _ -> Observable<Void> in
+        guard let self = self else { return .empty() }
+        self.playService.skip()
+        return .just(()) }
 
     let playOrPause = inputs.playOrPause
       .withLatestFrom(self.playService.isPlaying)
       .flatMapLatest { isPlaying -> Observable<Void> in
         if isPlaying {
-          self.playService.pause()
+          weakSelf?.playService.pause()
         } else {
-          self.playService.play()
+          weakSelf?.playService.play()
         }
         return .just(())
     }
@@ -150,15 +157,15 @@ final class AudioListViewModel {
         return Observable<Int>
           .interval(.seconds(1), scheduler: MainScheduler.instance)
           .startWith(-1)
-          .map { _ in self.playService.currentTime }
+          .map { _ in weakSelf?.playService.currentTime ?? 0 }
     }
 
     let totalTime = fetchAudio
-      .map { _ in self.playService.totalTime }
+      .map { _ in weakSelf?.playService.totalTime ?? 0 }
 
 
     let isPlayerClosed = inputs.closePlayer
-      .map { _ in self.playService.pause() }
+      .map { _ in weakSelf?.playService.pause() }
 
     let isPlayerOpened = Observable.merge(
       isPlayerClosed.map { _ in false },
@@ -166,7 +173,7 @@ final class AudioListViewModel {
     )
 
     return .init(
-      section: section,
+      section: section.asDriver(onErrorDriveWith: .empty()),
       playingModel: playingModel.asDriver(onErrorDriveWith: .empty()),
       currentTime: currentTime.asDriver(onErrorDriveWith: .empty()),
       totalTime: totalTime.asDriver(onErrorDriveWith: .empty()),

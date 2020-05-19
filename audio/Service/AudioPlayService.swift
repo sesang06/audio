@@ -11,16 +11,26 @@ import AVFoundation
 import RxSwift
 import RxCocoa
 
+protocol AudioPlayServiceType {
+  var isPlaying: Observable<Bool> { get }
+  var currentTime: TimeInterval { get }
+  var totalTime: TimeInterval { get }
+  func start(url: URL?)
+  func pause()
+  func skip()
+  func rewind()
+  func play()
+}
 
-final class AudioPlayService {
+final class AudioPlayService: AudioPlayServiceType {
 
   private let isPlayingTrigger = PublishSubject<Void>()
 
   private var player: AVAudioPlayer?
 
   var isPlaying: Observable<Bool> {
-    return self.isPlayingTrigger.map {
-      self.player?.isPlaying ?? false
+    return self.isPlayingTrigger.map { [weak self] in
+      self?.player?.isPlaying ?? false
     }
   }
 
