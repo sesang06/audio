@@ -16,7 +16,7 @@ enum AudioAPI {
 extension AudioAPI: TargetType {
 
   var baseURL: URL {
-    return URL(string: "https://raw.githubusercontent.com/sesang06/audio/master/audio")!
+    return URL(string: "https://raw.githubusercontent.com/sesang06/audio/master")!
   }
 
 
