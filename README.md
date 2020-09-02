@@ -1,5 +1,7 @@
 rxSwift, mvvm 오디오  어플리케이션
 
+<img src="https://raw.githubusercontent.com/sesang06/audio/master/playing.gif" width="90%"></img>
+
 # 설치법
 
 1. Xcode 를 설치합니다.
