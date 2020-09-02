@@ -10,21 +10,18 @@ import Foundation
 import Moya
 
 enum AudioAPI {
-  case configuration
   case list
 }
 
 extension AudioAPI: TargetType {
 
   var baseURL: URL {
-    return URL(string: "https://s3-ap-northeast-1.amazonaws.com/connectier-interview")!
+    return URL(string: "https://raw.githubusercontent.com/sesang06/audio/master/audio")!
   }
 
 
   var path: String {
     switch self {
-    case .configuration:
-      return "/config.json"
     case .list:
       return "/list.json"
     }
@@ -32,8 +29,6 @@ extension AudioAPI: TargetType {
 
   var method: Moya.Method {
     switch self {
-    case .configuration:
-      return .get
     case .list:
       return .get
     }

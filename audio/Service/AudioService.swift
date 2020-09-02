@@ -12,7 +12,6 @@ import RxMoya
 import SwiftyJSON
 
 protocol AudioServiceType {
-  func configuration() -> Single<AudioModel.Configuration>
   func list() -> Single<[AudioModel.Audio]>
 }
 
@@ -29,12 +28,6 @@ final class AudioService {
 }
 
 extension AudioService: AudioServiceType {
-  func configuration() -> Single<AudioModel.Configuration> {
-    return self.networking.rx
-      .request(.configuration)
-      .mapSwiftyJSON()
-      .map { AudioModel.Configuration(json: $0) }
-  }
 
   func list() -> Single<[AudioModel.Audio]> {
     return self.networking.rx

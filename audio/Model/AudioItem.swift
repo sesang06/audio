@@ -15,10 +15,10 @@ struct AudioItem {
   let description: String
   let audioURL: URL?
 
-  init(model: AudioModel.Audio, config: AudioModel.Configuration) {
+  init(model: AudioModel.Audio) {
     self.title = model.title
     self.description = model.description
-    self.imageURL = config.staticUrlPrefix?.appendingPathComponent(model.imageURLPath)
-    self.audioURL = config.staticUrlPrefix?.appendingPathComponent(model.audioURLPath)
+    self.imageURL = URL(string: model.imageURLPath)
+    self.audioURL = URL(string: model.audioURLPath)
   }
 }

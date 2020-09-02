@@ -1,0 +1,20 @@
+[
+    {
+        "title": "Sample 1",
+        "description": "Sample One Description",
+        "image_url": "https://picsum.photos/id/237/200/200",
+        "audio_url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    },
+    {
+        "title": "Sample 2",
+        "description": "Sample Two Description",
+        "image_url": "https://picsum.photos/id/1/200/200",
+        "audio_url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+    },
+    {
+        "title": "Sample 1",
+        "description": "Sample One Description",
+        "image_url": "https://picsum.photos/id/3/200/200",
+        "audio_url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+    }
+]

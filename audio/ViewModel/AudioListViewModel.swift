@@ -11,7 +11,7 @@ import RxSwift
 import RxCocoa
 
 final class AudioListViewModel {
-
+  
   struct Inputs {
     let viewDidLoad: Observable<Void>
     let itemSelected: Observable<IndexPath>
@@ -22,7 +22,7 @@ final class AudioListViewModel {
     let skip: Observable<Void>
     let rewind: Observable<Void>
   }
-
+  
   struct Outputs {
     let section: Driver<[AudioItem]>
     let playingModel: Driver<AudioItem>
@@ -31,14 +31,14 @@ final class AudioListViewModel {
     let isPlaying: Driver<Bool>
     let isPlayerOpened: Driver<Bool>
   }
-
+  
   private let service: AudioServiceType
-
+  
   private let downloadService: AudioDownloadServiceType
-
+  
   private let playService: AudioPlayServiceType
-
-
+  
+  
   init(
     service: AudioServiceType,
     downloadService: AudioDownloadServiceType,
@@ -48,41 +48,37 @@ final class AudioListViewModel {
     self.downloadService = downloadService
     self.playService = playService
   }
-
+  
   fileprivate enum Action {
     case itemSelect
     case previous
     case next
   }
-
-
+  
+  
   func transform(inputs: Inputs) -> Outputs {
-
+    
     weak var weakSelf = self
-
-    let configuration = inputs.viewDidLoad
-      .flatMapLatest { _ in weakSelf?.service.configuration().asObservable() ?? .empty() }
-
+    
+    
     let models = inputs.viewDidLoad
       .flatMapLatest { _ in weakSelf?.service.list().asObservable() ?? .empty() }
-
-    let section = Observable.combineLatest(
-      configuration,
+    
+    let section =
       models
-    )
-      .map { configuration, models -> [AudioItem] in
-        return models.map {
-          return AudioItem(model: $0, config: configuration)
-        } }
-
-
+        .map { models -> [AudioItem] in
+          return models.map {
+            return AudioItem(model: $0)
+          } }
+    
+    
     let previous = inputs.previous.map { (0, Action.previous) }
-
+    
     let next = inputs.next.map { (0, Action.next) }
-
+    
     let select = inputs.itemSelected.map { ($0.item, Action.itemSelect) }
-
-
+    
+    
     let playingIndex = Observable.merge(
       previous,
       next,
@@ -98,42 +94,42 @@ final class AudioListViewModel {
       }
     }
     .map { $0.0 }
-
-     let selectedAudio = playingIndex
+    
+    let selectedAudio = playingIndex
       .withLatestFrom(section) { index, section -> AudioItem in
         var loopingIndex = index % section.count
         if loopingIndex < 0 {
           loopingIndex += section.count
         }
         return section[loopingIndex]
-     }
-
+    }
+    
     let fetchAudio = selectedAudio
       .flatMapLatest { model -> Observable<URL> in return
         weakSelf?.downloadService.fetch(url: model.audioURL) ?? .empty() }
       .map {
         weakSelf?.playService.start(url: $0)
         weakSelf?.playService.play()
-       return
+        return
     }
-     .share()
-
+    .share()
+    
     let playingModel = Observable.zip(
       selectedAudio,
       fetchAudio
     )
       .map { $0.0 }
       .share()
-
+    
     let rewind = inputs.rewind
       .flatMap { _ -> Observable<Void> in .just(self.playService.rewind()) }
-
+    
     let skip = inputs.skip
       .flatMap { [weak self] _ -> Observable<Void> in
         guard let self = self else { return .empty() }
         self.playService.skip()
         return .just(()) }
-
+    
     let playOrPause = inputs.playOrPause
       .withLatestFrom(self.playService.isPlaying)
       .flatMapLatest { isPlaying -> Observable<Void> in
@@ -144,14 +140,14 @@ final class AudioListViewModel {
         }
         return .just(())
     }
-
+    
     let currentTimeTrigger = Observable.merge(
       fetchAudio,
       rewind,
       skip,
       playOrPause
     )
-
+    
     let currentTime = currentTimeTrigger
       .flatMapLatest { _ -> Observable<TimeInterval> in
         return Observable<Int>
@@ -159,19 +155,19 @@ final class AudioListViewModel {
           .startWith(-1)
           .map { _ in weakSelf?.playService.currentTime ?? 0 }
     }
-
+    
     let totalTime = fetchAudio
       .map { _ in weakSelf?.playService.totalTime ?? 0 }
-
-
+    
+    
     let isPlayerClosed = inputs.closePlayer
       .map { _ in weakSelf?.playService.pause() }
-
+    
     let isPlayerOpened = Observable.merge(
       isPlayerClosed.map { _ in false },
       playingModel.map { _ in true }
     )
-
+    
     return .init(
       section: section.asDriver(onErrorDriveWith: .empty()),
       playingModel: playingModel.asDriver(onErrorDriveWith: .empty()),
